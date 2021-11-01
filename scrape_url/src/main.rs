@@ -1,39 +1,31 @@
 use std::fs;
 
-//获取网页，转换为md文件，不处理异常
-fn test(){
-  let url = "https://www.rust-lang.org/";
-  let output = "rust.md";
-  
-  println!("Fetching url: {}", url);
-  let body = reqwest::blocking::get(url).unwrap().text().unwrap();
+//获取网页，转换为md文件处理异常
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+	for arg in std::env::args() {
+        println!("{}", arg);
+    }
+    let args = std::env::args().skip(1).collect::<Vec<_>>();
 
-  println!("Converting html to markdown...");
-  let md = html2md::parse_html(&body);
+    if args.is_empty() {
+        println!("Usage: scrape_url_args <url> <output file>");
+        std::process::exit(1);
+    }
 
-  fs::write(output, md.as_bytes()).unwrap();
-  println!("Converted markdown has been saved in {}.", output);
-}
+    let url = &args[0];
+    let output = &args[1];
+	
+    let url = "https://www.rust-lang.org/";
+    let output = "rust.md";
 
-// 获取网页，转换为md文件
-// 函数现在返回一个 Result
-fn test_exception()-> Result<(), Box<dyn std::error::Error>> {
-  let url = "https://www.rust-lang.org/";
-  let output = "rust.md";
+    println!("Fetching url: {}", url);
+    let body = reqwest::blocking::get(url)?.text()?;
 
-  println!("Fetching url: {}", url);
-  let body = reqwest::blocking::get(url)?.text()?;
+    println!("Converting html to markdown...");
+    let md = html2md::parse_html(&body);
 
-  println!("Converting html to markdown...");
-  let md = html2md::parse_html(&body);
+    fs::write(output, md.as_bytes())?;
+    println!("Converted markdown has been saved in {}.", output);
 
-  fs::write(output, md.as_bytes())?;
-  println!("Converted markdown has been saved in {}.", output);
-
-  Ok(())
-}
-
-fn main() {
-  test();
-  test_exception();
+    Ok(())
 }

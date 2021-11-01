@@ -3,6 +3,48 @@ name = "hello-rust"
 version = "0.1.0"
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "func_as_param"
+path = "src/basic/func_as_param.rs"
+
+[[bin]]
+name = "pointer"
+path = "src/basic/pointer.rs"
+
+[[bin]]
+name = "return_val"
+path = "src/basic/return_val.rs"
+
+[[bin]]
+name = "where_is_pi"
+path = "src/basic/where_is_pi.rs"
+
+[[bin]]
+name = "fib"
+path = "src/control/fib.rs"
+
+[[bin]]
+name = "hello"
+path = "src/tests/hello.rs"
+
+[[bin]]
+name = "enum"
+path = "src/type/enum.rs"
+
+[[bin]]
+name = "event"
+path = "src/type/event.rs"
+
+[[bin]]
+name = "shapes"
+path = "src/type/shapes.rs"
+
+[[bin]]
+name = "string"
+path = "src/type/string.rs"
+
+[[bin]]
+name = "struts"
+path = "src/type/struts.rs"
 
 [dependencies]
