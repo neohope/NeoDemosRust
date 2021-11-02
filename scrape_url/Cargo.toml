@@ -3,7 +3,9 @@ name = "scrape_url"
 version = "0.1.0"
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "scrape_url"
+path = "src/scrape_url.rs"
 
 [dependencies]
 reqwest = { version = "0.11", features = ["blocking"] }
