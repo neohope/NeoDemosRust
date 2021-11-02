@@ -11,6 +11,7 @@ use syntect::{
     util::{as_24_bit_terminal_escaped, LinesWithEndings},
 };
 
+//==========================================================================
 // 以下部分用于处理 CLI
 
 // 定义 httpie 的 CLI 的主入口，它包含若干个子命令
@@ -18,7 +19,7 @@ use syntect::{
 
 /// A naive httpie implementation with Rust, can you imagine how easy it is?
 #[derive(Parser, Debug)]
-#[clap(version = "1.0", author = "Tyr Chen <tyr@chen.com>")]
+#[clap(version = "1.0", author = "neohope")]
 struct Opts {
     #[clap(subcommand)]
     subcmd: SubCommand,
@@ -56,6 +57,9 @@ struct Post {
     body: Vec<KvPair>,
 }
 
+//==========================================================================
+// KV解析
+
 /// 命令行中的 key=value 可以通过 parse_kv_pair 解析成 KvPair 结构
 #[derive(Debug, PartialEq)]
 struct KvPair {
@@ -86,12 +90,17 @@ fn parse_kv_pair(s: &str) -> Result<KvPair> {
     s.parse()
 }
 
+//==========================================================================
+// 校验URL是否合法
 fn parse_url(s: &str) -> Result<String> {
     // 这里我们仅仅检查一下 URL 是否合法
     let _url: Url = s.parse()?;
 
     Ok(s.into())
 }
+
+//==========================================================================
+// 子命令处理
 
 /// 处理 get 子命令
 async fn get(client: Client, args: &Get) -> Result<()> {
@@ -108,6 +117,9 @@ async fn post(client: Client, args: &Post) -> Result<()> {
     let resp = client.post(&args.url).json(&body).send().await?;
     Ok(print_resp(resp).await?)
 }
+
+//==========================================================================
+// 输出HTTP响应信息
 
 // 打印服务器版本号 + 状态码
 fn print_status(resp: &Response) {
@@ -153,6 +165,20 @@ fn get_content_type(resp: &Response) -> Option<Mime> {
         .map(|v| v.to_str().unwrap().parse().unwrap())
 }
 
+fn print_syntect(s: &str, ext: &str) {
+    // Load these once at the start of your program
+    let ps = SyntaxSet::load_defaults_newlines();
+    let ts = ThemeSet::load_defaults();
+    let syntax = ps.find_syntax_by_extension(ext).unwrap();
+    let mut h = HighlightLines::new(syntax, &ts.themes["base16-ocean.dark"]);
+    for line in LinesWithEndings::from(s) {
+        let ranges: Vec<(Style, &str)> = h.highlight(line, &ps);
+        let escaped = as_24_bit_terminal_escaped(&ranges[..], true);
+        print!("{}", escaped);
+    }
+}
+
+//==========================================================================
 /// 程序的入口函数，因为在 http 请求时我们使用了异步处理，所以这里引入 tokio
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -172,24 +198,13 @@ async fn main() -> Result<()> {
     Ok(result)
 }
 
-fn print_syntect(s: &str, ext: &str) {
-    // Load these once at the start of your program
-    let ps = SyntaxSet::load_defaults_newlines();
-    let ts = ThemeSet::load_defaults();
-    let syntax = ps.find_syntax_by_extension(ext).unwrap();
-    let mut h = HighlightLines::new(syntax, &ts.themes["base16-ocean.dark"]);
-    for line in LinesWithEndings::from(s) {
-        let ranges: Vec<(Style, &str)> = h.highlight(line, &ps);
-        let escaped = as_24_bit_terminal_escaped(&ranges[..], true);
-        print!("{}", escaped);
-    }
-}
-
+//==========================================================================
 // 仅在 cargo test 时才编译
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    // 测试URL解析
     #[test]
     fn parse_url_works() {
         assert!(parse_url("abc").is_err());
@@ -197,9 +212,11 @@ mod tests {
         assert!(parse_url("https://httpbin.org/post").is_ok());
     }
 
+    // 测试KV对解析
     #[test]
     fn parse_kv_pair_works() {
         assert!(parse_kv_pair("a").is_err());
+
         assert_eq!(
             parse_kv_pair("a=1").unwrap(),
             KvPair {
