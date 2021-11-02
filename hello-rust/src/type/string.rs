@@ -1,3 +1,6 @@
+// 字符串测试
+// 胖指针，但具体字符串是一致的
+
 fn main() {
     let data: String = "hello".into();
 

@@ -1,3 +1,5 @@
+// trait测试
+
 const MY_PI: f64 = std::f64::consts::PI;
 
 struct Rectangle {
@@ -58,6 +60,11 @@ impl Area for Triangle {
 
 fn main() {
     let rec = Rectangle { a: 10.0, b: 5.0 };
+    println!("area is: {}", rec.area());
+
     let shape = Shape::Rec(rec);
     println!("area is: {}", shape.area());
+
+    let c = Circle { r: 5.0 };
+    println!("area is: {}", c.area());
 }

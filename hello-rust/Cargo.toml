@@ -32,8 +32,8 @@ name = "enum"
 path = "src/type/enum.rs"
 
 [[bin]]
-name = "event"
-path = "src/type/event.rs"
+name = "events"
+path = "src/type/events.rs"
 
 [[bin]]
 name = "shapes"

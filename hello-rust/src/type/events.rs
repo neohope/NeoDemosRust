@@ -1,7 +1,9 @@
-//定义一个聊天服务
+// 聊天服务
+// 用到了模式匹配
+
+#[allow(dead_code)]
 #[derive(Debug)]
-enum Gender {
-    #[allow(dead_code)]
+enum Gender {    
     Unspecified = 0,
     Female = 1,
     Male = 2,
@@ -35,6 +37,7 @@ enum Event {
     Message((UserId, TopicId, String)),
 }
 
+// 模式匹配
 fn process_event(event: &Event) {
     match event {
         Event::Join((uid, _tid)) => println!("user {:?} joined", uid),
@@ -49,6 +52,7 @@ fn main() {
         name: "Alice".into(),
         gender: Gender::Female,
     };
+
     let bob = User {
         id: UserId(2),
         name: "Bob".into(),
@@ -60,13 +64,13 @@ fn main() {
         name: "rust".into(),
         owner: UserId(1),
     };
+    
     let event1 = Event::Join((alice.id, topic.id));
     let event2 = Event::Join((bob.id, topic.id));
     let event3 = Event::Message((alice.id, topic.id, "Hello world!".into()));
 
     println!(
-        "event1: {:?}, event2: {:?}, event3: {:?}",
-        event1, event2, event3
+        "event1: {:?}, event2: {:?}, event3: {:?}", event1, event2, event3
     );
 
     // pattern match event
@@ -74,5 +78,3 @@ fn main() {
     process_event(&event2);
     process_event(&event3);
 }
-
-
