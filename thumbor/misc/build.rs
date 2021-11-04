@@ -5,7 +5,7 @@ fn main() {
     println!("{:?}", std::env::current_dir());
 
     /*
-    // 环境控制，避免重复生成
+    // 避免重复生成protos
     let build_enabled = option_env!("BUILD_PROTO")
         .map(|v| v == "1")
         .unwrap_or(false);
@@ -16,13 +16,15 @@ fn main() {
     }
     */
 
+    // abi文件翻译为rs文件
     prost_build::Config::new()
-        .out_dir("../src/pb")
-        .compile_protos(&["abi.proto"], &["."])
+        .out_dir("src/pb")
+        .compile_protos(&["misc/abi.proto"], &["."])
         .unwrap();
-    
+
+    // 格式化rs文件
     Command::new("cargo")
-        .args(&["fmt", "--", "rc/pb/*.rs"])
+        .args(&["fmt", "--", "src/pb/abi.rs"])
         .status()
         .expect("cargo fmt failed");
 }

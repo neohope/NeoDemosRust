@@ -3,19 +3,13 @@ name = "thumbor"
 version = "0.1.0"
 edition = "2018"
 
+#[[bin]]
+#name = "build_pb"
+#path = "misc/build.rs"
+
 [[bin]]
-name = "build_pb"
-path = "misc/build.rs"
-
-
-#[[bin]]
-#name = "server1"
-#path = "src/server1.rs"
-
-#[[bin]]
-#name = "server2"
-#path = "src/server2.rs"
-
+name = "server1"
+path = "src/server1.rs"
 
 [dependencies]
 axum = "0.2" # web 服务器
@@ -37,5 +31,5 @@ tracing = "0.1" # 日志和追踪
 tracing-subscriber = "0.2" # 日志和追踪
 prost-build = "0.8"
 
-#[build-dependencies]
-#prost-build = "0.8"
+[build-dependencies]
+prost-build = "0.8"
