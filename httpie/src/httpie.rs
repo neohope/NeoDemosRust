@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Result};
 use clap::Parser;
-use colored::Colorize;
 use mime::Mime;
 use reqwest::{header, Client, Response, Url};
 use std::{collections::HashMap, str::FromStr};
@@ -17,7 +16,7 @@ use syntect::{
 // 定义 httpie 的 CLI 的主入口，它包含若干个子命令
 // 下面 /// 的注释是文档，clap 会将其作为 CLI 的帮助
 
-/// A naive httpie implementation with Rust, can you imagine how easy it is?
+/// Rust版本的httpie
 #[derive(Parser, Debug)]
 #[clap(version = "1.0", author = "neohope")]
 struct Opts {
@@ -35,7 +34,7 @@ enum SubCommand {
 
 // get 子命令
 
-/// feed get with an url and we will retrieve the response for you
+/// HTTP GET请求
 #[derive(Parser, Debug)]
 struct Get {
     /// HTTP 请求的 URL
@@ -45,14 +44,13 @@ struct Get {
 
 // post 子命令。需要输入一个 url，和若干个可选的 key=value，用于提供 json body
 
-/// feed post with an url and optional key=value pairs. We will post the data
-/// as JSON, and retrieve the response for you
+/// HTTP POST请求
 #[derive(Parser, Debug)]
 struct Post {
-    /// HTTP 请求的 URL
+    /// HTTP 请求的 URL，通过parse_url函数处理
     #[clap(parse(try_from_str = parse_url))]
     url: String,
-    /// HTTP 请求的 body
+    /// HTTP 请求的 body，通过parse_kv_pair函数处理
     #[clap(parse(try_from_str=parse_kv_pair))]
     body: Vec<KvPair>,
 }
@@ -60,21 +58,23 @@ struct Post {
 //==========================================================================
 // KV解析
 
-/// 命令行中的 key=value 可以通过 parse_kv_pair 解析成 KvPair 结构
+// 命令行中的 key=value 可以通过 parse_kv_pair 解析成 KvPair 结构
 #[derive(Debug, PartialEq)]
 struct KvPair {
     k: String,
     v: String,
 }
 
-/// 当我们实现 FromStr trait 后，可以用 str.parse() 方法将字符串解析成 KvPair
+// 当我们实现 FromStr trait 后，可以用 str.parse() 方法将字符串解析成 KvPair
 impl FromStr for KvPair {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         // 使用 = 进行 split，这会得到一个迭代器
         let mut split = s.split('=');
+        // 错误处理函数
         let err = || anyhow!(format!("Failed to parse {}", s));
+        // 依次处理K与V，最后生成一个KvPair对象
         Ok(Self {
             // 从迭代器中取第一个结果作为 key，迭代器返回 Some(T)/None
             // 我们将其转换成 Ok(T)/Err(E)，然后用 ? 处理错误
@@ -85,7 +85,8 @@ impl FromStr for KvPair {
     }
 }
 
-/// 因为我们为 KvPair 实现了 FromStr，这里可以直接 s.parse() 得到 KvPair
+// 解析参数中的KV对，返回KvPair
+// 因为我们为 KvPair 实现了 FromStr，这里可以直接 s.parse() 得到 KvPair
 fn parse_kv_pair(s: &str) -> Result<KvPair> {
     s.parse()
 }
@@ -95,7 +96,6 @@ fn parse_kv_pair(s: &str) -> Result<KvPair> {
 fn parse_url(s: &str) -> Result<String> {
     // 这里我们仅仅检查一下 URL 是否合法
     let _url: Url = s.parse()?;
-
     Ok(s.into())
 }
 
@@ -123,20 +123,42 @@ async fn post(client: Client, args: &Post) -> Result<()> {
 
 // 打印服务器版本号 + 状态码
 fn print_status(resp: &Response) {
-    let status = format!("{:?} {}", resp.version(), resp.status()).blue();
+    let status = format!("{:?} {}", resp.version(), resp.status());
     println!("{}\n", status);
 }
 
 // 打印服务器返回的 HTTP header
 fn print_headers(resp: &Response) {
     for (name, value) in resp.headers() {
-        println!("{}: {:?}", name.to_string().green(), value);
+        println!("{}: {:?}", name.to_string(), value);
     }
 
     println!();
 }
 
-/// 打印服务器返回的 HTTP body
+// 将服务器返回的 content-type 解析成 Mime 类型
+fn get_content_type(resp: &Response) -> Option<Mime> {
+    resp.headers()
+        .get(header::CONTENT_TYPE)
+        .map(|v| v.to_str().unwrap().parse().unwrap())
+}
+
+// 美化并输出，并不美。。。
+fn print_syntect(s: &str, ext: &str) {
+    // Load these once at the start of your program
+    let ps = SyntaxSet::load_defaults_newlines();
+    let ts = ThemeSet::load_defaults();
+    let syntax = ps.find_syntax_by_extension(ext).unwrap();
+    //let mut h = HighlightLines::new(syntax, &ts.themes["base16-ocean.dark"]);
+    let mut h = HighlightLines::new(syntax, &ts.themes["InspiredGitHub"]);
+    for line in LinesWithEndings::from(s) {
+        let ranges: Vec<(Style, &str)> = h.highlight(line, &ps);
+        let escaped = as_24_bit_terminal_escaped(&ranges[..], true);
+        print!("{}", escaped);
+    }
+}
+
+// 打印服务器返回的 HTTP body
 fn print_body(m: Option<Mime>, body: &str) {
     match m {
         // 对于 "application/json" 我们 pretty print
@@ -148,7 +170,7 @@ fn print_body(m: Option<Mime>, body: &str) {
     }
 }
 
-/// 打印整个响应
+// 打印整个响应
 async fn print_resp(resp: Response) -> Result<()> {
     print_status(&resp);
     print_headers(&resp);
@@ -158,38 +180,27 @@ async fn print_resp(resp: Response) -> Result<()> {
     Ok(())
 }
 
-/// 将服务器返回的 content-type 解析成 Mime 类型
-fn get_content_type(resp: &Response) -> Option<Mime> {
-    resp.headers()
-        .get(header::CONTENT_TYPE)
-        .map(|v| v.to_str().unwrap().parse().unwrap())
-}
-
-fn print_syntect(s: &str, ext: &str) {
-    // Load these once at the start of your program
-    let ps = SyntaxSet::load_defaults_newlines();
-    let ts = ThemeSet::load_defaults();
-    let syntax = ps.find_syntax_by_extension(ext).unwrap();
-    let mut h = HighlightLines::new(syntax, &ts.themes["base16-ocean.dark"]);
-    for line in LinesWithEndings::from(s) {
-        let ranges: Vec<(Style, &str)> = h.highlight(line, &ps);
-        let escaped = as_24_bit_terminal_escaped(&ranges[..], true);
-        print!("{}", escaped);
-    }
-}
-
 //==========================================================================
 /// 程序的入口函数，因为在 http 请求时我们使用了异步处理，所以这里引入 tokio
 #[tokio::main]
 async fn main() -> Result<()> {
+    // 解析命令行
+    // 在子命令匹配时，处理参数解析
     let opts: Opts = Opts::parse();
-    let mut headers = header::HeaderMap::new();
+    println!("{:?}", opts);
+
     // 为我们的 http 客户端添加一些缺省的 HTTP 头
+    let mut headers = header::HeaderMap::new();
     headers.insert("X-POWERED-BY", "Rust".parse()?);
     headers.insert(header::USER_AGENT, "Rust Httpie".parse()?);
+
+    // 创建http client
     let client = reqwest::Client::builder()
         .default_headers(headers)
         .build()?;
+
+    // 模式匹配，执行请求
+    // 最终调用了get和post函数
     let result = match opts.subcmd {
         SubCommand::Get(ref args) => get(client, args).await?,
         SubCommand::Post(ref args) => post(client, args).await?,
