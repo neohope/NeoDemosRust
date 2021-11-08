@@ -22,6 +22,7 @@ use tower_http::{
     add_extension::AddExtensionLayer, compression::CompressionLayer, trace::TraceLayer,
 };
 use tracing::{info, instrument};
+use std::convert::TryInto;
 
 mod engine;
 mod pb;
@@ -38,14 +39,19 @@ struct Params {
     url: String,
 }
 
+// LRU缓存
 type Cache = Arc<Mutex<LruCache<u64, Bytes>>>;
 
 #[tokio::main]
 async fn main() {
     // 初始化 tracing
     tracing_subscriber::fmt::init();
+
+    // 初始化缓存
     let cache: Cache = Arc::new(Mutex::new(LruCache::new(1024)));
+
     // 构建路由
+    // 添加了三个处理层，获取图片，，
     let app = Router::new()
         // `GET /` 会执行
         .route("/image/:spec/:url", get(generate))
@@ -70,17 +76,22 @@ async fn main() {
         .unwrap();
 }
 
-// basic handler that responds with a static string
+// get方法访问web服务器时，触发这个方法
 async fn generate(
     Path(Params { spec, url }): Path<Params>,
     Extension(cache): Extension<Cache>,
 ) -> Result<(HeaderMap, Vec<u8>), StatusCode> {
+    
+    // pb转为ImageSpec
     let spec: ImageSpec = spec
         .as_str()
         .try_into()
         .map_err(|_| StatusCode::BAD_REQUEST)?;
 
+    // url字符串解除转码
     let url: &str = &percent_decode_str(&url).decode_utf8_lossy();
+
+    // 从远程获取图片
     let data = retrieve_image(url, cache)
         .await
         .map_err(|_| StatusCode::BAD_REQUEST)?;
@@ -90,22 +101,30 @@ async fn generate(
         .try_into()
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     engine.apply(&spec.specs);
+
+    // 转换输出为JPEG
     // TODO: 这里目前类型写死了，应该使用 content negotiation
     let image = engine.generate(ImageOutputFormat::Jpeg(85));
 
     info!("Finished processing: image size {}", image.len());
-    let mut headers = HeaderMap::new();
 
+    // 输出图片
+    let mut headers = HeaderMap::new();
     headers.insert("content-type", HeaderValue::from_static("image/jpeg"));
     Ok((headers, image))
 }
 
+// 从远程获取图片，同时做了一个缓存功能
 #[instrument(level = "info", skip(cache))]
 async fn retrieve_image(url: &str, cache: Cache) -> Result<Bytes> {
+    // 通过url计算key
     let mut hasher = DefaultHasher::new();
     url.hash(&mut hasher);
     let key = hasher.finish();
 
+    // 缓存加锁
+    // 如果缓存存在，直接返回
+    // 如果缓存不存在，远程读取图片
     let g = &mut cache.lock().await;
     let data = match g.get(&key) {
         Some(v) => {

@@ -4,6 +4,7 @@ use anyhow::Result;
 use bytes::Bytes;
 use image::{DynamicImage, ImageBuffer, ImageOutputFormat};
 use lazy_static::lazy_static;
+use std::convert::TryFrom;
 use photon_rs::{
     effects, filters, multiple, native::open_image_from_bytes, transform, PhotonImage,
 };
@@ -11,13 +12,13 @@ use photon_rs::{
 lazy_static! {
     // 预先把水印文件加载为静态变量
     static ref WATERMARK: PhotonImage = {
-        let data = include_bytes!("../../static/rust-logo.png");
-        let watermark = open_image_from_bytes(data).unwrap();
+        let wm_data = include_bytes!("../../static/rust-logo.png");
+        let watermark = open_image_from_bytes(wm_data).unwrap();
         transform::resize(&watermark, 64, 64, transform::SamplingFilter::Nearest)
     };
 }
 
-// 我们目前支持 Photon engine
+// 我们目前只支持 Photon engine
 pub struct Photon(PhotonImage);
 
 // 从 Bytes 转换成 Photon 结构
@@ -29,7 +30,9 @@ impl TryFrom<Bytes> for Photon {
     }
 }
 
+// 实现Engine trait
 impl Engine for Photon {
+    // 进行处理
     fn apply(&mut self, specs: &[Spec]) {
         for spec in specs.iter() {
             match spec.data {
@@ -46,6 +49,7 @@ impl Engine for Photon {
         }
     }
 
+    // 生成图片，并将格式转换为指定格式
     fn generate(self, format: ImageOutputFormat) -> Vec<u8> {
         image_to_buf(self.0, format)
     }

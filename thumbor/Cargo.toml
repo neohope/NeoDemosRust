@@ -8,8 +8,8 @@ edition = "2018"
 #path = "misc/build.rs"
 
 [[bin]]
-name = "server1"
-path = "src/server1.rs"
+name = "server"
+path = "src/server.rs"
 
 [dependencies]
 axum = "0.2" # web 服务器

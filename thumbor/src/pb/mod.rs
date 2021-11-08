@@ -5,16 +5,18 @@ use std::convert::TryFrom;
 #[allow(unused_imports)]
 use std::convert::TryInto;
 
-mod abi; // 声明 abi.rs
+// 声明 abi.rs
+mod abi; 
 pub use abi::*;
 
+// 构造函数
 impl ImageSpec {
     pub fn new(specs: Vec<Spec>) -> Self {
         Self { specs }
     }
 }
 
-// 让 ImageSpec 可以生成一个字符串
+// ImageSpec转base64字符串
 impl From<&ImageSpec> for String {
     fn from(image_spec: &ImageSpec) -> Self {
         let data = image_spec.encode_to_vec();
@@ -22,7 +24,7 @@ impl From<&ImageSpec> for String {
     }
 }
 
-// 让 ImageSpec 可以通过一个字符串创建。比如 s.parse().unwrap()
+// base64字符串转ImageSpec。比如 s.parse().unwrap()
 impl TryFrom<&str> for ImageSpec {
     type Error = anyhow::Error;
 
@@ -32,7 +34,7 @@ impl TryFrom<&str> for ImageSpec {
     }
 }
 
-// 辅助函数，photon_rs 相应的方法里需要字符串
+// Filter转为字符串，后续提供给photon_rs
 impl filter::Filter {
     pub fn to_str(self) -> Option<&'static str> {
         match self {
@@ -44,7 +46,7 @@ impl filter::Filter {
     }
 }
 
-// 在我们定义的 SampleFilter 和 photon_rs 的 SamplingFilter 间转换
+// 自定义SampleFilter 转换为 photon_rs 的 SamplingFilter
 impl From<resize::SampleFilter> for SamplingFilter {
     fn from(v: resize::SampleFilter) -> Self {
         match v {
@@ -105,8 +107,9 @@ mod tests {
     #[test]
     fn encoded_spec_could_be_decoded() {
         let spec1 = Spec::new_resize(600, 600, resize::SampleFilter::CatmullRom);
-        let spec2 = Spec::new_filter(filter::Filter::Marine);
-        let image_spec = ImageSpec::new(vec![spec1, spec2]);
+        let spec2 = Spec::new_watermark(20, 20);
+        let spec3 = Spec::new_filter(filter::Filter::Marine);
+        let image_spec = ImageSpec::new(vec![spec1, spec2, spec3]);
         let s: String = image_spec.borrow().into();
         assert_eq!(image_spec, s.as_str().try_into().unwrap());
     }
