@@ -6,7 +6,7 @@ async fn main() -> Result<()> {
 
     tracing_subscriber::fmt::init();
 
-    let url = "file://examples/owid-covid-latest.csv";
+    let url = "file://owid-covid-latest.csv";
     // let url = "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/latest/owid-covid-latest.csv";
 
     // 执行SQL查询，从URL里获取CSV数据

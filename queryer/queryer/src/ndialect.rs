@@ -22,7 +22,8 @@ impl Dialect for NDialect {
 
 /// 测试辅助函数
 pub fn example_sql() -> String {
-    let url = "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/latest/owid-covid-latest.csv";
+    let url = "file://owid-covid-latest.csv";
+    //let url = "https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/latest/owid-covid-latest.csv";
 
     let sql = format!(
         "SELECT location name, total_cases, new_cases, total_deaths, new_deaths \

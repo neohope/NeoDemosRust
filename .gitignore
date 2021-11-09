@@ -3,4 +3,9 @@
 
 #rust
 *.lock
-/*/target
+/**/target
+
+#python
+/**/.env
+
+*.csv
