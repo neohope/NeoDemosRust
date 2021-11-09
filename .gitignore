@@ -8,4 +8,10 @@
 #python
 /**/.env
 
+
+#nodejs
+/**/node_modules
+
+#me
 *.csv
+*.me.bat
