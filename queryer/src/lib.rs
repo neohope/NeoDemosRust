@@ -1,59 +1,33 @@
 use anyhow::{anyhow, Result};
 use polars::prelude::*;
 use sqlparser::parser::Parser;
-use std::ops::{Deref, DerefMut};
 use tracing::info;
 
-mod convert;
-mod dialect;
-mod fetcher;
-mod loader;
-use convert::Sql;
-use fetcher::retrieve_data;
-use loader::detect_content;
+mod nconvert;
+mod ndialect;
+mod nfetcher;
+mod nloader;
+mod ndataset;
+use nconvert::Sql;
+use ndataset::DataSet;
+use nfetcher::retrieve_data;
+use nloader::detect_content;
 
-pub use dialect::example_sql;
-pub use dialect::TyrDialect;
+pub use ndialect::example_sql;
+pub use ndialect::NDialect;
 
-#[derive(Debug)]
-pub struct DataSet(DataFrame);
-
-/// 让 DataSet 用起来和 DataFrame 一致
-impl Deref for DataSet {
-    type Target = DataFrame;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-/// 让 DataSet 用起来和 DataFrame 一致
-impl DerefMut for DataSet {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl DataSet {
-    /// 从 DataSet 转换成 csv
-    pub fn to_csv(&self) -> Result<String> {
-        let mut buf = Vec::new();
-        let writer = CsvWriter::new(&mut buf);
-        writer.finish(self)?;
-        Ok(String::from_utf8(buf)?)
-    }
-}
+use std::convert::TryInto;
 
 /// 从 from 中获取数据，从 where 中过滤，最后选取需要返回的列
 pub async fn query<T: AsRef<str>>(sql: T) -> Result<DataSet> {
-    let ast = Parser::parse_sql(&TyrDialect::default(), sql.as_ref())?;
-
+    // 将sql解析为AST树结构
+    let ast = Parser::parse_sql(&NDialect::default(), sql.as_ref())?;
     if ast.len() != 1 {
         return Err(anyhow!("Only support single sql at the moment"));
     }
 
+    // 将AST转换为
     let sql = &ast[0];
-
     let Sql {
         source,
         condition,
@@ -65,21 +39,26 @@ pub async fn query<T: AsRef<str>>(sql: T) -> Result<DataSet> {
 
     info!("retrieving data from source: {}", source);
 
-    // 从 source 读入一个 DataSet
+    // 从 source 读入一个CSV文件， 通过loader转成Dataset
     let ds = detect_content(retrieve_data(source).await?).load()?;
 
+    // 根据condition，进行match运算
     let mut filtered = match condition {
         Some(expr) => ds.0.lazy().filter(expr),
         None => ds.0.lazy(),
     };
 
+    // 根据order_by，做reduce运算，按col和desc排序
     filtered = order_by
         .into_iter()
         .fold(filtered, |acc, (col, desc)| acc.sort(&col, desc));
 
+    // 通过offset和limit进行数据截取，也是选择操作的一种
     if offset.is_some() || limit.is_some() {
         filtered = filtered.slice(offset.unwrap_or(0), limit.unwrap_or(usize::MAX));
     }
 
+    // 根据selection，做投影操作
+    // 最后将LazyFrame转换为DataSet
     Ok(DataSet(filtered.select(selection).collect()?))
 }

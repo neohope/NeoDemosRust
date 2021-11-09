@@ -1,10 +1,12 @@
 use sqlparser::dialect::Dialect;
 
 #[derive(Debug, Default)]
-pub struct TyrDialect;
+pub struct NDialect;
 
-// 创建自己的 sql 方言。TyrDialect 支持 identifier 可以是简单的 url
-impl Dialect for TyrDialect {
+// 创建一个sql方言，让简单的url可以作为identifier
+impl Dialect for NDialect {
+
+    // identifier 以大小写字母或_开始
     fn is_identifier_start(&self, ch: char) -> bool {
         ('a'..='z').contains(&ch) || ('A'..='Z').contains(&ch) || ch == '_'
     }
@@ -31,6 +33,7 @@ pub fn example_sql() -> String {
     sql
 }
 
+// 测试了url可以作为table名称
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -38,6 +41,6 @@ mod tests {
 
     #[test]
     fn it_works() {
-        assert!(Parser::parse_sql(&TyrDialect::default(), &example_sql()).is_ok());
+        assert!(Parser::parse_sql(&NDialect::default(), &example_sql()).is_ok());
     }
 }

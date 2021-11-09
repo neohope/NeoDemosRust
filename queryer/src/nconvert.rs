@@ -4,6 +4,8 @@ use sqlparser::ast::{
     BinaryOperator as SqlBinaryOperator, Expr as SqlExpr, Offset as SqlOffset, OrderByExpr, Select,
     SelectItem, SetExpr, Statement, TableFactor, TableWithJoins, Value as SqlValue,
 };
+use std::convert::TryFrom;
+use std::convert::TryInto;
 
 /// 解析出来的 SQL
 pub struct Sql<'a> {
@@ -151,6 +153,7 @@ impl<'a> TryFrom<Projection<'a>> for Expr {
     }
 }
 
+/// 把SqlParser的Source转换成表名，当前只支持单表操作
 impl<'a> TryFrom<Source<'a>> for &'a str {
     type Error = anyhow::Error;
 
@@ -229,7 +232,7 @@ impl TryFrom<Value> for LiteralValue {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::TyrDialect;
+    use crate::NDialect;
     use sqlparser::parser::Parser;
 
     #[test]
@@ -239,7 +242,7 @@ mod tests {
             "select a, b, c from {} where a=1 order by c desc limit 5 offset 10",
             url
         );
-        let statement = &Parser::parse_sql(&TyrDialect::default(), sql.as_ref()).unwrap()[0];
+        let statement = &Parser::parse_sql(&NDialect::default(), sql.as_ref()).unwrap()[0];
         let sql: Sql = statement.try_into().unwrap();
         assert_eq!(sql.source, url);
         assert_eq!(sql.limit, Some(5));
