@@ -5,15 +5,19 @@ pub fn example_sql(mut cx: FunctionContext) -> JsResult<JsString> {
 }
 
 fn query(mut cx: FunctionContext) -> JsResult<JsString> {
+    //获取SQL
     let sql = cx.argument::<JsString>(0)?.value(&mut cx);
-    let output = match cx.argument::<JsString>(1) {
-        Ok(v) => v.value(&mut cx),
-        Err(_) => "csv".to_string(),
-    };
+    //判断输出格式
+    let output_fmt  = cx.argument_opt(1)
+    .map_or(
+        "csv".to_owned(),
+        |v| v.to_string(&mut cx).unwrap().value(&mut cx),
+    );
+
     let rt = tokio::runtime::Runtime::new().unwrap();
     let data = rt.block_on(async { queryer::query(sql).await.unwrap() });
 
-    match output.as_str() {
+    match output_fmt .as_str() {
         "csv" => Ok(cx.string(data.to_csv().unwrap())),
         v => cx.throw_type_error(format!("Output type {} not supported", v)),
     }
