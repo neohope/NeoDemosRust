@@ -1,0 +1,26 @@
+[package]
+name = "borrow"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "ownership_reference"
+path = "src/ownership_reference.rs"
+
+[[bin]]
+name = "manual_drop"
+path = "src/manual_drop.rs"
+
+[[bin]]
+name = "vec_grow"
+path = "src/vec_grow.rs"
+
+[[bin]]
+name = "reborrow"
+path = "src/reborrow.rs"
+
+[[bin]]
+name = "reborrow1"
+path = "src/reborrow1.rs"
+
+[dependencies]
