@@ -1,3 +1,5 @@
+// ManuallyDrop例子
+
 use std::{
     mem::ManuallyDrop,
     ops::{Deref, DerefMut},
@@ -33,7 +35,7 @@ impl DerefMut for MyString {
 }
 
 fn main() {
-    // 使用 ManuallyDrop 封装数据结构使其不进行自动 drop
+    // 使用 ManuallyDrop封装数据结构使其不进行自动 drop
     let mut s = ManuallyDrop::new(MyString::from("Hello World!"));
 
     // ManuallyDrop 使用了 Deref trait 指向 T，所以可以当 MyString 使用，MyString 又可以当 String 用

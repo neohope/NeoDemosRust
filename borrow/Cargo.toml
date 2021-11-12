@@ -12,15 +12,20 @@ name = "manual_drop"
 path = "src/manual_drop.rs"
 
 [[bin]]
-name = "vec_grow"
-path = "src/vec_grow.rs"
-
-[[bin]]
 name = "reborrow"
 path = "src/reborrow.rs"
 
 [[bin]]
 name = "reborrow1"
 path = "src/reborrow1.rs"
+
+[[bin]]
+name = "vec_grow"
+path = "src/vec_grow.rs"
+
+[[bin]]
+name = "multiple_mut_ref"
+path = "src/multiple_mut_ref.rs"
+
 
 [dependencies]
