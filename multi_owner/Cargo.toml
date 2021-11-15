@@ -4,15 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "dag"
-path = "src/dag.rs"
-
-[[bin]]
-name = "refcell"
-path = "src/refcell.rs"
-
-[[bin]]
 name = "dag_mut"
 path = "src/dag_mut.rs"
+
+[[bin]]
+name = "spawn"
+path = "src/spawn.rs"
+
+[[bin]]
+name = "weak_reference"
+path = "src/weak_reference.rs"
 
 [dependencies]
