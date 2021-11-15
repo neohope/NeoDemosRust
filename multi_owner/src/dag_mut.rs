@@ -1,6 +1,11 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+/*
+ *    通过RC实现同一堆内存的多次引用
+ *    通过RefCell解决可变问题
+ */
+
 #[derive(Debug)]
 struct Node {
     id: usize,
@@ -31,11 +36,13 @@ fn main() {
     let mut node3 = Node::new(3);
     let node4 = Node::new(4);
 
+    // Rc解决多次引用问题
     node3.update_downstream(Rc::new(RefCell::new(node4)));
     node1.update_downstream(Rc::new(RefCell::new(node3)));
     node2.update_downstream(node1.get_downstream().unwrap());
     println!("node1: {:?}, node2: {:?}", node1, node2);
 
+    // RefCell解决可变问题
     let node5 = Node::new(5);
     let node3 = node1.get_downstream().unwrap();
     // 获得可变引用，来修改 downstream
