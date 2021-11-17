@@ -1,0 +1,19 @@
+[package]
+name = "memory"
+version = "0.1.0"
+edition = "2021"
+
+
+[[bin]]
+name = "size"
+path = "src/size.rs"
+
+[[bin]]
+name = "raii"
+path = "src/raii.rs"
+
+[[bin]]
+name = "alignment"
+path = "src/alignment.rs"
+
+[dependencies]

@@ -3,7 +3,6 @@ name = "lifetime"
 version = "0.1.0"
 edition = "2021"
 
-# 如果尝试编译 lifetime 会因为生命周期出错
 [[bin]]
 name = "lifetime"
 path = "src/lifetime.rs"
