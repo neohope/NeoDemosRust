@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+// 这里是编译器做的优化
 fn main() {
     let mut map = HashMap::new();
     map.insert("hello", "world");

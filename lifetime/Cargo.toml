@@ -13,15 +13,15 @@ name = "auto_lifetime"
 path = "src/auto_lifetime.rs"
 
 [[bin]]
-name = "lifetime_non_lexical"
-path = "src/lifetime_non_lexical.rs"
-
-[[bin]]
 name = "strtok"
 path = "src/strtok.rs"
 
 [[bin]]
 name = "lifetime_mono"
 path = "src/lifetime_mono.rs"
+
+[[bin]]
+name = "lifetime_non_lexical"
+path = "src/lifetime_non_lexical.rs"
 
 [dependencies]
