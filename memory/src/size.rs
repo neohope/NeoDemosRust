@@ -9,7 +9,7 @@ enum E {
 }
 
 macro_rules! show_size {
-    (header) => {
+    (header) => {                                    //表头
         println!(
             "{:<24} {:>4}    {}    {}",
             "Type", "T", "Option<T>", "Result<T, io::Error>"
@@ -19,7 +19,7 @@ macro_rules! show_size {
     ($t:ty) => {
         println!(
             "{:<24} {:4} {:8} {:12}",
-            stringify!($t),
+            stringify!($t),                          //类型转字符
             size_of::<$t>(),
             size_of::<Option<$t>>(),
             size_of::<Result<$t, std::io::Error>>(),
