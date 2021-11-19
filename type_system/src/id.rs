@@ -7,3 +7,6 @@ fn main() {
     let string = id("Tyr");
     println!("{}, {}", int, string);
 }
+
+
+
